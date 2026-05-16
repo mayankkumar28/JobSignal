@@ -148,8 +148,3 @@ The extension:
 - Stores the sponsor list and usage stats in `chrome.storage.local` (never synced, never sent anywhere)
 - Does **not** collect, transmit, or share any personal data or browsing history
 
-## License
-
-© 2026 Mayank Kumar. All rights reserved. This software is proprietary and confidential.
-
-For licensing inquiries or commercial use, please contact mayank.zxc@gmail.com

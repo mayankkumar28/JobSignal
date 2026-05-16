@@ -150,4 +150,6 @@ The extension:
 
 ## License
 
-MIT
+© 2026 Mayank Kumar. All rights reserved. This software is proprietary and confidential.
+
+For licensing inquiries or commercial use, please contact mayank.zxc@gmail.com

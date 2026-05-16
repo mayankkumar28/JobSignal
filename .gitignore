@@ -9,6 +9,9 @@ dist/
 .claude/
 CLAUDE.md
 
+# Documentation
+docs/
+
 # IDEs
 .vscode/
 .idea/

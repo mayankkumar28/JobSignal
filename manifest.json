@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "JobSignal",
+  "version": "1.0.0",
+  "description": "JobSignal overlays LinkedIn job listings with signals about hiring companies — starting with Dutch IND visa sponsorship.",
+  "permissions": ["storage", "alarms"],
+  "host_permissions": ["https://ind.nl/*"],
+  "background": {
+    "service_worker": "background/serviceWorker.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.linkedin.com/jobs/*"],
+      "js": ["content/index.js"],
+      "css": ["content/badges.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "assets/icon-16.png",
+      "48": "assets/icon-48.png",
+      "128": "assets/icon-128.png"
+    }
+  },
+  "icons": {
+    "16": "assets/icon-16.png",
+    "48": "assets/icon-48.png",
+    "128": "assets/icon-128.png"
+  }
+}

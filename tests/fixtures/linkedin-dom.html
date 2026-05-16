@@ -1,0 +1,34 @@
+<!-- Realistic LinkedIn job card structures using both known selector variants -->
+
+<!-- Card 1: primary selector, job-card-container + primary-description -->
+<div class="job-card-container">
+  <h3 class="job-card-list__title">Software Engineer</h3>
+  <div class="job-card-container__primary-description">Booking.com</div>
+</div>
+
+<!-- Card 2: secondary selector, jobs-search-results__list-item + artdeco subtitle -->
+<li class="jobs-search-results__list-item">
+  <h3 class="job-card-list__title">Hardware Engineer</h3>
+  <div class="artdeco-entity-lockup__subtitle">ASML Holding N.V.</div>
+</li>
+
+<!-- Card 3: already processed — must be skipped by scanner -->
+<div class="job-card-container" data-dvs-checked="">
+  <div class="job-card-container__primary-description">Fake Corp Already Done</div>
+</div>
+
+<!-- Card 4: no company name element — must be skipped -->
+<div class="job-card-container">
+  <h3 class="job-card-list__title">Designer</h3>
+</div>
+
+<!-- Card 5: whitespace-only company name — must be skipped -->
+<div class="job-card-container">
+  <div class="job-card-container__primary-description">   </div>
+</div>
+
+<!-- Card 6: Adyen, unprocessed -->
+<div class="job-card-container">
+  <h3 class="job-card-list__title">Product Manager</h3>
+  <div class="job-card-container__primary-description">Adyen</div>
+</div>

@@ -1,0 +1,24 @@
+.dvs-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  margin-left: 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  vertical-align: middle;
+  cursor: default;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.dvs-badge--confirmed {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+.dvs-badge--uncertain {
+  background: #f59e0b;
+  color: #ffffff;
+}

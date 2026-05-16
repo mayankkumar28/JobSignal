@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JobSignal</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <h1>JobSignal</h1>
+      <p class="header-subtitle">🇳🇱 Dutch Visa Sponsor</p>
+    </header>
+
+    <section class="stats">
+      <div class="stat-row">
+        <span class="stat-label">Companies scanned</span>
+        <span class="stat-value" id="companies-scanned">—</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Sponsors found</span>
+        <span class="stat-value" id="sponsors-found">—</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Last synced</span>
+        <span class="stat-value" id="last-synced">—</span>
+      </div>
+    </section>
+
+    <section class="settings">
+      <div class="setting-row">
+        <span class="setting-label">Matching mode</span>
+        <div class="toggle-group" role="group" aria-label="Matching mode">
+          <button class="toggle-btn" id="mode-strict" data-mode="strict">Strict</button>
+          <button class="toggle-btn" id="mode-fuzzy" data-mode="fuzzy">Fuzzy</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="actions">
+      <button class="action-btn" id="refresh-btn">🔄 Refresh Sponsor List</button>
+      <p class="status-msg" id="refresh-status" hidden></p>
+    </section>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

@@ -2,17 +2,28 @@ import { FUZZY_THRESHOLD } from "./constants";
 import { normalize, tokenize } from "./normalizer";
 import type { MatchResult, SponsorEntry } from "./types";
 
+// tokenSet is precomputed once at index build time. Without this, the fuzzy
+// loop allocated a fresh Set per sponsor per call — ~12,800 Sets per miss
+// times ~3 misses per page = ~38k throw-away allocations per scan.
+export interface IndexedSponsorEntry extends SponsorEntry {
+  tokenSet: Set<string>;
+}
+
 export interface SponsorIndex {
-  exactMap: Map<string, SponsorEntry>;
-  entries: SponsorEntry[];
+  exactMap: Map<string, IndexedSponsorEntry>;
+  entries: IndexedSponsorEntry[];
 }
 
 export function buildSponsorIndex(sponsors: SponsorEntry[]): SponsorIndex {
-  const exactMap = new Map<string, SponsorEntry>();
-  for (const sponsor of sponsors) {
+  const entries: IndexedSponsorEntry[] = sponsors.map((s) => ({
+    ...s,
+    tokenSet: new Set(s.tokens),
+  }));
+  const exactMap = new Map<string, IndexedSponsorEntry>();
+  for (const sponsor of entries) {
     exactMap.set(sponsor.normalizedName, sponsor);
   }
-  return { exactMap, entries: sponsors };
+  return { exactMap, entries };
 }
 
 export function isRecognizedSponsor(
@@ -46,14 +57,13 @@ export function isRecognizedSponsor(
 
   const inputSet = new Set(inputTokens);
   let bestScore = 0;
-  let bestSponsor: SponsorEntry | null = null;
+  let bestSponsor: IndexedSponsorEntry | null = null;
 
   for (const sponsor of index.entries) {
     if (sponsor.tokens.length === 0) continue;
-    const sponsorSet = new Set(sponsor.tokens);
     let overlap = 0;
     for (const token of inputSet) {
-      if (sponsorSet.has(token)) overlap++;
+      if (sponsor.tokenSet.has(token)) overlap++;
     }
     const denominator = allowSubsetMatch
       ? Math.min(inputTokens.length, sponsor.tokens.length)

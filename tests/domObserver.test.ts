@@ -17,6 +17,14 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+function appendJobCard(parent: Element): Element {
+  // base-search-card matches the JOB_HINT_SEL filter in domObserver.
+  const card = document.createElement("div");
+  card.className = "base-search-card";
+  parent.appendChild(card);
+  return card;
+}
+
 describe("startObserver", () => {
   it("returns a MutationObserver", () => {
     const obs = startObserver(vi.fn());
@@ -24,12 +32,12 @@ describe("startObserver", () => {
     obs.disconnect();
   });
 
-  it("fires callback after debounce delay on DOM mutation", async () => {
+  it("fires callback after debounce delay on a job-like DOM mutation", async () => {
     const callback = vi.fn();
     const obs = startObserver(callback);
 
     const main = document.querySelector("main")!;
-    main.appendChild(document.createElement("div"));
+    appendJobCard(main);
 
     // Let jsdom fire the MutationObserver microtask, then advance past debounce
     await flushMicrotasks();
@@ -41,13 +49,28 @@ describe("startObserver", () => {
     obs.disconnect();
   });
 
-  it("coalesces rapid mutations into one callback call", async () => {
+  it("ignores mutations that do not introduce job-like elements", async () => {
+    const callback = vi.fn();
+    const obs = startObserver(callback);
+
+    const main = document.querySelector("main")!;
+    // Generic <div> — not in the job hint selector list.
+    main.appendChild(document.createElement("div"));
+
+    await flushMicrotasks();
+    vi.advanceTimersByTime(DEBOUNCE_MS + 10);
+    expect(callback).not.toHaveBeenCalled();
+
+    obs.disconnect();
+  });
+
+  it("coalesces rapid job-card additions into one callback call", async () => {
     const callback = vi.fn();
     const obs = startObserver(callback);
 
     const main = document.querySelector("main")!;
     for (let i = 0; i < 10; i++) {
-      main.appendChild(document.createElement("li"));
+      appendJobCard(main);
     }
 
     await flushMicrotasks();
@@ -64,13 +87,13 @@ describe("startObserver", () => {
     const main = document.querySelector("main")!;
 
     // First burst
-    main.appendChild(document.createElement("div"));
+    appendJobCard(main);
     await flushMicrotasks();
     vi.advanceTimersByTime(DEBOUNCE_MS + 10);
     expect(callback).toHaveBeenCalledTimes(1);
 
     // Second burst
-    main.appendChild(document.createElement("div"));
+    appendJobCard(main);
     await flushMicrotasks();
     vi.advanceTimersByTime(DEBOUNCE_MS + 10);
     expect(callback).toHaveBeenCalledTimes(2);
@@ -131,8 +154,8 @@ describe("startObserver", () => {
     const callback = vi.fn();
     const obs = startObserver(callback);
 
-    // Mutate body directly
-    document.body.appendChild(document.createElement("section"));
+    // Mutate body directly with a job-like card
+    appendJobCard(document.body);
     await flushMicrotasks();
     vi.advanceTimersByTime(DEBOUNCE_MS + 10);
 

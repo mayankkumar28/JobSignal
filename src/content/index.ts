@@ -5,6 +5,7 @@ import { startObserver } from "./domObserver";
 import { scanVisibleJobs } from "./linkedinScanner";
 
 const SCROLL_THROTTLE_MS = 500;
+const STATS_DEBOUNCE_MS = 2000;
 const CACHE_RETRY_DELAYS = [1500, 3000, 5000];
 
 function isJobsPage(): boolean {
@@ -67,6 +68,23 @@ export async function init(): Promise<void> {
 
   let totalScanned = 0;
   let totalFound = 0;
+  let statsTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function flushStats(): void {
+    statsTimer = null;
+    if (!chrome.runtime?.id) return;
+    chrome.runtime
+      .sendMessage({
+        type: "UPDATE_STATS",
+        payload: { companiesScanned: totalScanned, sponsorsFound: totalFound },
+      } satisfies MessageType)
+      .catch(() => {});
+  }
+
+  function scheduleStatsUpdate(): void {
+    if (statsTimer !== null) clearTimeout(statsTimer);
+    statsTimer = setTimeout(flushStats, STATS_DEBOUNCE_MS);
+  }
 
   processBatch = function (): void {
     const jobs = scanVisibleJobs();
@@ -81,14 +99,7 @@ export async function init(): Promise<void> {
 
     totalScanned += jobs.length;
     totalFound += batchFound;
-
-    // Best-effort stat update — the service worker may be sleeping between events
-    chrome.runtime
-      .sendMessage({
-        type: "UPDATE_STATS",
-        payload: { companiesScanned: totalScanned, sponsorsFound: totalFound },
-      } satisfies MessageType)
-      .catch(() => {});
+    scheduleStatsUpdate();
   };
 
   processBatch();

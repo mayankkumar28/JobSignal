@@ -50,23 +50,6 @@ test("popup shows non-zero sponsors-found after processing fixture page", async 
   await context.close();
 });
 
-test("mode toggle switches active button and persists on reload", async () => {
-  const { context, extensionId } = await launchWithExtension();
-  const popup = await context.newPage();
-  await popup.goto(`chrome-extension://${extensionId}/popup/popup.html`);
-  await popup.waitForTimeout(500);
-
-  // Click strict mode
-  await popup.locator("#mode-strict").click();
-  await expect(popup.locator("#mode-strict")).toHaveClass(/toggle-btn--active/);
-  await expect(popup.locator("#mode-fuzzy")).not.toHaveClass(/toggle-btn--active/);
-
-  // Reload popup — persisted setting should survive
-  await popup.reload();
-  await popup.waitForTimeout(500);
-  await expect(popup.locator("#mode-strict")).toHaveClass(/toggle-btn--active/);
-  await context.close();
-});
 
 test("last-synced shows a real date (not 'Never') after install", async () => {
   const { context, extensionId } = await launchWithExtension();

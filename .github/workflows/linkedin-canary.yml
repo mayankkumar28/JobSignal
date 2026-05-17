@@ -9,8 +9,8 @@ jobs:
   canary:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 24
           cache: npm
@@ -20,7 +20,7 @@ jobs:
       - name: Run live LinkedIn tests
         run: xvfb-run --auto-servernum npx playwright test --config tests/playwright-live.config.ts
         continue-on-error: true
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: failure()
         with:
           name: canary-traces

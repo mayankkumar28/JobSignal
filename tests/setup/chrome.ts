@@ -7,6 +7,7 @@ vi.stubGlobal("chrome", {
   alarms: { create: vi.fn(), onAlarm: { addListener: vi.fn() } },
   runtime: {
     onInstalled: { addListener: vi.fn() },
+    onStartup: { addListener: vi.fn() },
     onMessage: { addListener: vi.fn() },
   },
 });

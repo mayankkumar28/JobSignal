@@ -23,10 +23,6 @@ export interface ExtensionStats {
   lastSyncTimestamp: number;
 }
 
-export interface ExtensionSettings {
-  matchingMode: "strict" | "fuzzy";
-}
-
 export type MessageType =
   | { type: "GET_SPONSORS" }
   | { type: "REFRESH_SPONSORS" }

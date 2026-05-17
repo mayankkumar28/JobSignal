@@ -26,3 +26,14 @@ Thumbs.db
 # Environment
 .env
 .env.local
+
+# Playwright auth state (contains session cookies — never commit)
+scripts/.auth-state.json
+
+# Playwright output
+test-results/
+playwright-report/
+diagnose-screenshot.png
+diagnose-live-screenshot.png
+
+creds.txt

@@ -1,0 +1,13 @@
+{
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.linkedin.com/*",
+        "http://localhost:*/*"
+      ],
+      "js": ["content/index.js"],
+      "css": ["content/badges.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

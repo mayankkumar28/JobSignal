@@ -3,36 +3,28 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { readFileSync } from "fs";
 import { resolve } from "path";
 
-// Mock storage before popup.ts is imported
-vi.mock("../src/shared/storage", () => ({
-  getSettings: vi.fn(),
-  setSettings: vi.fn(),
-}));
+vi.mock("../src/shared/storage", () => ({}));
 
-import { getSettings, setSettings } from "../src/shared/storage";
 import {
   formatDate,
   renderStats,
-  renderSettings,
   loadStats,
-  loadSettings,
   handleRefresh,
-  handleModeToggle,
 } from "../src/popup/popup";
-import type { ExtensionStats, ExtensionSettings, SponsorCache } from "../src/shared/types";
+import type { ExtensionStats, SponsorCache } from "../src/shared/types";
 
 const popupHtml = readFileSync(
   resolve(__dirname, "../src/popup/popup.html"),
   "utf-8",
 );
 
-// Chrome mock — override the setup file stub with one that has sendMessage
 const mockSendMessage = vi.fn();
 vi.stubGlobal("chrome", {
   storage: { local: { get: vi.fn(), set: vi.fn() } },
   alarms: { create: vi.fn(), onAlarm: { addListener: vi.fn() } },
   runtime: {
     onInstalled: { addListener: vi.fn() },
+    onStartup: { addListener: vi.fn() },
     onMessage: { addListener: vi.fn() },
     sendMessage: mockSendMessage,
   },
@@ -57,8 +49,6 @@ const mockCache: SponsorCache = {
 beforeEach(() => {
   document.documentElement.innerHTML = popupHtml;
   vi.clearAllMocks();
-  vi.mocked(getSettings).mockResolvedValue({ matchingMode: "fuzzy" });
-  vi.mocked(setSettings).mockResolvedValue(undefined);
   mockSendMessage.mockResolvedValue(mockStats);
 });
 
@@ -101,29 +91,6 @@ describe("renderStats", () => {
   });
 });
 
-// ── renderSettings ───────────────────────────────────────────────────────────
-
-describe("renderSettings", () => {
-  it("marks the fuzzy button as active when mode is fuzzy", () => {
-    renderSettings({ matchingMode: "fuzzy" });
-    expect(document.getElementById("mode-fuzzy")!.classList.contains("toggle-btn--active")).toBe(true);
-    expect(document.getElementById("mode-strict")!.classList.contains("toggle-btn--active")).toBe(false);
-  });
-
-  it("marks the strict button as active when mode is strict", () => {
-    renderSettings({ matchingMode: "strict" });
-    expect(document.getElementById("mode-strict")!.classList.contains("toggle-btn--active")).toBe(true);
-    expect(document.getElementById("mode-fuzzy")!.classList.contains("toggle-btn--active")).toBe(false);
-  });
-
-  it("switches active class when called a second time with a different mode", () => {
-    renderSettings({ matchingMode: "strict" });
-    renderSettings({ matchingMode: "fuzzy" });
-    expect(document.getElementById("mode-fuzzy")!.classList.contains("toggle-btn--active")).toBe(true);
-    expect(document.getElementById("mode-strict")!.classList.contains("toggle-btn--active")).toBe(false);
-  });
-});
-
 // ── loadStats ────────────────────────────────────────────────────────────────
 
 describe("loadStats", () => {
@@ -133,16 +100,6 @@ describe("loadStats", () => {
     expect(mockSendMessage).toHaveBeenCalledWith({ type: "GET_STATS" });
     expect(document.getElementById("companies-scanned")!.textContent).toBe("142");
     expect(document.getElementById("sponsors-found")!.textContent).toBe("23");
-  });
-});
-
-// ── loadSettings ─────────────────────────────────────────────────────────────
-
-describe("loadSettings", () => {
-  it("reads settings and reflects them in the toggle buttons", async () => {
-    vi.mocked(getSettings).mockResolvedValue({ matchingMode: "strict" });
-    await loadSettings();
-    expect(document.getElementById("mode-strict")!.classList.contains("toggle-btn--active")).toBe(true);
   });
 });
 
@@ -188,27 +145,5 @@ describe("handleRefresh — failure", () => {
     await handleRefresh();
     const btn = document.getElementById("refresh-btn") as HTMLButtonElement;
     expect(btn.disabled).toBe(false);
-  });
-});
-
-// ── handleModeToggle ─────────────────────────────────────────────────────────
-
-describe("handleModeToggle", () => {
-  it("saves the new mode to storage", async () => {
-    await handleModeToggle("strict");
-    expect(setSettings).toHaveBeenCalledWith({ matchingMode: "strict" });
-  });
-
-  it("updates the toggle UI immediately", async () => {
-    await handleModeToggle("strict");
-    expect(document.getElementById("mode-strict")!.classList.contains("toggle-btn--active")).toBe(true);
-    expect(document.getElementById("mode-fuzzy")!.classList.contains("toggle-btn--active")).toBe(false);
-  });
-
-  it("switching back to fuzzy re-activates the fuzzy button", async () => {
-    await handleModeToggle("strict");
-    await handleModeToggle("fuzzy");
-    expect(document.getElementById("mode-fuzzy")!.classList.contains("toggle-btn--active")).toBe(true);
-    expect(document.getElementById("mode-strict")!.classList.contains("toggle-btn--active")).toBe(false);
   });
 });

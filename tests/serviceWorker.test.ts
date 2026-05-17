@@ -9,16 +9,16 @@ vi.mock("../src/shared/storage", () => ({
   setSponsorCache: vi.fn(),
   getStats: vi.fn(),
   updateStats: vi.fn(),
-  getSettings: vi.fn(),
-  setSettings: vi.fn(),
+  isCacheStale: vi.fn(),
 }));
 
 import { fetchAndBuildCache } from "../src/shared/sponsorFetcher";
-import { getSponsorCache, setSponsorCache, getStats, updateStats } from "../src/shared/storage";
+import { getSponsorCache, setSponsorCache, getStats, updateStats, isCacheStale } from "../src/shared/storage";
 import {
   fetchAndCacheSponsors,
   handleInstall,
   handleAlarm,
+  handleStartup,
   dispatchMessage,
 } from "../src/background/serviceWorker";
 import type { SponsorCache, ExtensionStats } from "../src/shared/types";
@@ -38,6 +38,7 @@ beforeEach(() => {
   vi.mocked(updateStats).mockResolvedValue(undefined);
   vi.mocked(getSponsorCache).mockResolvedValue(mockCache);
   vi.mocked(getStats).mockResolvedValue(mockStats);
+  vi.mocked(isCacheStale).mockReturnValue(false);
 });
 
 // ── fetchAndCacheSponsors ────────────────────────────────────────────────────
@@ -67,6 +68,28 @@ describe("handleInstall", () => {
     expect(chrome.alarms.create).toHaveBeenCalledWith("refresh-sponsors", {
       periodInMinutes: 43200,
     });
+  });
+});
+
+// ── handleStartup ────────────────────────────────────────────────────────────
+
+describe("handleStartup", () => {
+  it("refreshes sponsors when cache is stale", async () => {
+    vi.mocked(isCacheStale).mockReturnValue(true);
+    await handleStartup();
+    expect(fetchAndBuildCache).toHaveBeenCalledOnce();
+  });
+
+  it("refreshes sponsors when no cache exists", async () => {
+    vi.mocked(getSponsorCache).mockResolvedValue(null);
+    await handleStartup();
+    expect(fetchAndBuildCache).toHaveBeenCalledOnce();
+  });
+
+  it("skips refresh when cache is fresh", async () => {
+    vi.mocked(isCacheStale).mockReturnValue(false);
+    await handleStartup();
+    expect(fetchAndBuildCache).not.toHaveBeenCalled();
   });
 });
 

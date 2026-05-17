@@ -4,11 +4,9 @@ import {
   setSponsorCache,
   getStats,
   updateStats,
-  getSettings,
-  setSettings,
 } from "../src/shared/storage";
-import { CACHE_KEY, SETTINGS_KEY, STATS_KEY } from "../src/shared/constants";
-import type { SponsorCache, ExtensionStats, ExtensionSettings } from "../src/shared/types";
+import { CACHE_KEY, STATS_KEY } from "../src/shared/constants";
+import type { SponsorCache, ExtensionStats } from "../src/shared/types";
 
 // ── Chrome storage mock ──────────────────────────────────────────────────────
 
@@ -116,35 +114,3 @@ describe("updateStats", () => {
   });
 });
 
-// ── getSettings / setSettings ────────────────────────────────────────────────
-
-describe("getSettings", () => {
-  it("returns fuzzy as the default matchingMode", async () => {
-    const settings = await getSettings();
-    expect(settings.matchingMode).toBe("fuzzy");
-  });
-
-  it("returns stored settings", async () => {
-    const s: ExtensionSettings = { matchingMode: "strict" };
-    store[SETTINGS_KEY] = s;
-    expect(await getSettings()).toEqual(s);
-  });
-});
-
-describe("setSettings", () => {
-  it("persists settings under SETTINGS_KEY", async () => {
-    await setSettings({ matchingMode: "strict" });
-    expect(store[SETTINGS_KEY]).toEqual({ matchingMode: "strict" });
-  });
-
-  it("round-trips through get after set", async () => {
-    await setSettings({ matchingMode: "strict" });
-    expect(await getSettings()).toEqual({ matchingMode: "strict" });
-  });
-
-  it("overwrites previous settings", async () => {
-    await setSettings({ matchingMode: "strict" });
-    await setSettings({ matchingMode: "fuzzy" });
-    expect((store[SETTINGS_KEY] as ExtensionSettings).matchingMode).toBe("fuzzy");
-  });
-});

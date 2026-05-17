@@ -14,10 +14,10 @@ function debounce(fn: () => void, ms: number): () => void {
 export function startObserver(callback: () => void): MutationObserver {
   const debouncedCallback = debounce(callback, DEBOUNCE_MS);
 
-  const target = document.querySelector("main") ?? document.body;
-
   const observer = new MutationObserver(debouncedCallback);
-  observer.observe(target, { childList: true, subtree: true });
+  // Observe body, not main: LinkedIn replaces <main> on SPA navigations, which
+  // would detach an observer anchored on the old <main> element.
+  observer.observe(document.body, { childList: true, subtree: true });
 
   window.addEventListener("popstate", debouncedCallback);
   window.addEventListener("hashchange", debouncedCallback);

@@ -17,8 +17,8 @@ beforeAll(() => {
   index = buildSponsorIndex(buildEntries(rawNames));
 });
 
-describe("isRecognizedSponsor — strict mode", () => {
-  const strictCases: [string, "exact" | "none"][] = [
+describe("isRecognizedSponsor", () => {
+  const exactCases: [string, "exact" | "none"][] = [
     ["Booking.com", "exact"],
     ["Booking.com B.V.", "exact"],
     ["UBER", "exact"],
@@ -28,8 +28,8 @@ describe("isRecognizedSponsor — strict mode", () => {
     ["", "none"],
   ];
 
-  it.each(strictCases)('"%s" → %s', (input, expectedConfidence) => {
-    const result = isRecognizedSponsor(input, index, "strict");
+  it.each(exactCases)('"%s" → %s (exact or none)', (input, expectedConfidence) => {
+    const result = isRecognizedSponsor(input, index);
     expect(result.confidence).toBe(expectedConfidence);
     expect(result.matched).toBe(expectedConfidence !== "none");
     if (expectedConfidence === "exact") {
@@ -37,26 +37,31 @@ describe("isRecognizedSponsor — strict mode", () => {
       expect(result.sponsorName).not.toBeNull();
     }
   });
-});
 
-describe("isRecognizedSponsor — fuzzy mode", () => {
   it('"ASML Holding" hits exact (suffix stripped before lookup)', () => {
-    const result = isRecognizedSponsor("ASML Holding", index, "fuzzy");
+    const result = isRecognizedSponsor("ASML Holding", index);
     expect(result.confidence).toBe("exact");
     expect(result.matched).toBe(true);
   });
 
   it('"Book" scores below threshold — no match', () => {
-    // "Book" does not overlap with "booking com" tokens (no shared token)
-    const result = isRecognizedSponsor("Book", index, "fuzzy");
+    const result = isRecognizedSponsor("Book", index);
     expect(result.confidence).toBe("none");
     expect(result.matched).toBe(false);
   });
 
-  it('"Fake Corp" returns none even in fuzzy mode', () => {
-    const result = isRecognizedSponsor("Fake Corp", index, "fuzzy");
+  it('"Fake Corp" returns none', () => {
+    const result = isRecognizedSponsor("Fake Corp", index);
     expect(result.confidence).toBe("none");
     expect(result.matched).toBe(false);
+  });
+
+  it('"Hadrian" matches "Hadrian Security B.V." as confirmed (all input tokens found)', () => {
+    const result = isRecognizedSponsor("Hadrian", index);
+    expect(result.matched).toBe(true);
+    expect(result.confidence).toBe("exact");
+    expect(result.score).toBe(1.0);
+    expect(result.sponsorName).toBe("Hadrian Security B.V.");
   });
 });
 

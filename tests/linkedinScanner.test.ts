@@ -52,16 +52,16 @@ describe("scanVisibleJobs", () => {
 
   it("skips cards with no company name element", () => {
     document.body.innerHTML = `
-      <div class="job-card-container">
-        <h3 class="job-card-list__title">Designer</h3>
+      <div class="base-card base-search-card">
+        <h3 class="base-search-card__title">Designer</h3>
       </div>`;
     expect(scanVisibleJobs()).toHaveLength(0);
   });
 
   it("skips cards with empty or whitespace-only company names", () => {
     document.body.innerHTML = `
-      <div class="job-card-container">
-        <div class="job-card-container__primary-description">   </div>
+      <div class="base-card base-search-card">
+        <h4 class="base-search-card__subtitle">   </h4>
       </div>`;
     expect(scanVisibleJobs()).toHaveLength(0);
   });
@@ -69,5 +69,80 @@ describe("scanVisibleJobs", () => {
   it("returns empty array when no job cards exist", () => {
     document.body.innerHTML = "<main><p>No jobs here</p></main>";
     expect(scanVisibleJobs()).toHaveLength(0);
+  });
+});
+
+// ── Logged-in DOM: left panel (company logo + role="button" card) ─────────────
+describe("scanVisibleJobs — logged-in left panel (company logo cards)", () => {
+  beforeEach(() => {
+    document.body.innerHTML = `
+      <div>
+        <div role="button" tabindex="0">
+          <img src="https://media.licdn.com/company-logo/tomtom.png" alt="TomTom logo" />
+          <div>
+            <p><span>Backend Engineer</span></p>
+            <p>TomTom</p>
+            <p>Amsterdam</p>
+          </div>
+        </div>
+        <div role="button" tabindex="0">
+          <img src="https://media.licdn.com/company-logo/adyen.png" alt="Adyen logo" />
+          <div>
+            <p><span>Frontend Engineer</span></p>
+            <p>Adyen N.V.</p>
+            <p>Amsterdam</p>
+          </div>
+        </div>
+        <div role="button" tabindex="0">
+          <!-- no company logo — should be skipped -->
+          <div>
+            <p><span>Designer</span></p>
+          </div>
+        </div>
+      </div>`;
+  });
+
+  it("scans both left-panel cards that have a company logo", () => {
+    expect(scanVisibleJobs()).toHaveLength(2);
+  });
+
+  it("extracts company name from the first plain-text <p>", () => {
+    const names = scanVisibleJobs().map((j) => j.companyName);
+    expect(names).toContain("TomTom");
+    expect(names).toContain("Adyen N.V.");
+  });
+
+  it("sets companyNameElement to the plain-text <p>", () => {
+    const [job] = scanVisibleJobs();
+    expect(job.companyNameElement.tagName).toBe("P");
+    expect(job.companyNameElement.children.length).toBe(0);
+  });
+
+  it("skips cards with no company logo", () => {
+    const jobs = scanVisibleJobs();
+    expect(jobs.every((j) => j.companyName.length > 0)).toBe(true);
+  });
+});
+
+// ── Logged-in DOM: right panel (B1 — ARIA label) ─────────────────────────────
+describe("scanVisibleJobs — logged-in right panel (ARIA label)", () => {
+  beforeEach(() => {
+    document.body.innerHTML = `
+      <div data-detail-panel="1">
+        <a href="/jobs/view/999">Software Engineer II</a>
+        <div aria-label="Company, TomTom.">
+          <a href="/company/tomtom/life/">TomTom</a>
+        </div>
+      </div>`;
+  });
+
+  it("extracts company name from the ARIA label", () => {
+    const [job] = scanVisibleJobs();
+    expect(job.companyName).toBe("TomTom");
+  });
+
+  it("sets companyNameElement to the inner company anchor", () => {
+    const [job] = scanVisibleJobs();
+    expect((job.companyNameElement as HTMLAnchorElement).href).toContain("/company/tomtom/");
   });
 });

@@ -1,47 +1,68 @@
 import { buildSponsorIndex, isRecognizedSponsor } from "../shared/sponsorMatcher";
-import { getSettings } from "../shared/storage";
 import type { MessageType, SponsorCache } from "../shared/types";
 import { renderBadge } from "./badgeRenderer";
 import { startObserver } from "./domObserver";
 import { scanVisibleJobs } from "./linkedinScanner";
 
 const SCROLL_THROTTLE_MS = 500;
+const CACHE_RETRY_DELAYS = [1500, 3000, 5000];
+
+function isJobsPage(): boolean {
+  return location.pathname.startsWith("/jobs");
+}
+
+async function getSponsorCacheWithRetry(): Promise<SponsorCache | null> {
+  for (let attempt = 0; attempt <= CACHE_RETRY_DELAYS.length; attempt++) {
+    if (!chrome.runtime?.id) return null;
+    try {
+      const cache = (await chrome.runtime.sendMessage(
+        { type: "GET_SPONSORS" } satisfies MessageType,
+      )) as SponsorCache | null;
+      if (cache?.sponsors.length) return cache;
+    } catch {
+      // Service worker waking up or context gone — fall through to retry.
+    }
+    if (attempt < CACHE_RETRY_DELAYS.length) {
+      await new Promise((r) => setTimeout(r, CACHE_RETRY_DELAYS[attempt]));
+    }
+  }
+  return null;
+}
+
+let initialized = false;
+// Lifted to module scope so SPA re-navigations can re-trigger a scan without
+// re-running the full async init (cache fetch + index build).
+let processBatch: (() => void) | null = null;
 
 export async function init(): Promise<void> {
-  // Guard: chrome.runtime.id is undefined when the extension context has been
-  // invalidated (e.g. extension reloaded while this tab was already open).
-  // Without this check, sendMessage throws and Chrome logs
-  // "GET chrome-extension://invalid/ net::ERR_FAILED" in the console.
+  if (initialized) {
+    // Already set up — just re-scan the freshly rendered DOM.
+    setTimeout(() => processBatch?.(), 600);
+    return;
+  }
   if (!chrome.runtime?.id) return;
 
-  let cache: SponsorCache | null = null;
-  try {
-    cache = (await chrome.runtime.sendMessage(
-      { type: "GET_SPONSORS" } satisfies MessageType,
-    )) as SponsorCache | null;
-  } catch {
-    // Service worker not yet registered (first install race) or context gone
+  initialized = true;
+
+  const cache = await getSponsorCacheWithRetry();
+
+  if (!cache) {
+    console.warn("[DVS] No sponsor cache — reload the tab if the extension was just installed");
     return;
   }
 
-  if (!cache || cache.sponsors.length === 0) {
-    console.warn("[DVS] No sponsor cache available — skipping badge injection");
-    return;
-  }
-
-  const settings = await getSettings();
   const index = buildSponsorIndex(cache.sponsors);
 
   let totalScanned = 0;
   let totalFound = 0;
 
-  function processBatch(): void {
+  processBatch = function (): void {
     const jobs = scanVisibleJobs();
     if (jobs.length === 0) return;
 
     let batchFound = 0;
     for (const job of jobs) {
-      const result = isRecognizedSponsor(job.companyName, index, settings.matchingMode);
+      const result = isRecognizedSponsor(job.companyName, index);
       renderBadge(job, result);
       if (result.matched) batchFound++;
     }
@@ -56,7 +77,7 @@ export async function init(): Promise<void> {
         payload: { companiesScanned: totalScanned, sponsorsFound: totalFound },
       } satisfies MessageType)
       .catch(() => {});
-  }
+  };
 
   processBatch();
   startObserver(processBatch);
@@ -68,11 +89,25 @@ export async function init(): Promise<void> {
       if (scrollTimer !== null) clearTimeout(scrollTimer);
       scrollTimer = setTimeout(() => {
         scrollTimer = null;
-        processBatch();
+        processBatch?.();
       }, SCROLL_THROTTLE_MS);
     },
     { passive: true },
   );
 }
 
-init().catch(console.error);
+// Always intercept pushState — covers both entering /jobs from another page
+// AND paginating within /jobs (page 2, 3, …) where LinkedIn uses pushState
+// without a full reload and the URL stays under /jobs.
+const origPush = history.pushState.bind(history);
+history.pushState = function (...args: Parameters<typeof history.pushState>) {
+  origPush(...args);
+  if (isJobsPage()) setTimeout(() => init().catch(console.error), 500);
+};
+window.addEventListener("popstate", () => {
+  if (isJobsPage()) init().catch(console.error);
+});
+
+if (isJobsPage()) {
+  init().catch(console.error);
+}

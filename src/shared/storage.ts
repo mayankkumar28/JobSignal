@@ -1,14 +1,10 @@
-import { CACHE_KEY, SETTINGS_KEY, STATS_KEY } from "./constants";
-import type { ExtensionSettings, ExtensionStats, SponsorCache } from "./types";
+import { CACHE_MAX_AGE_MS, CACHE_KEY, STATS_KEY } from "./constants";
+import type { ExtensionStats, SponsorCache } from "./types";
 
 const DEFAULT_STATS: ExtensionStats = {
   companiesScanned: 0,
   sponsorsFound: 0,
   lastSyncTimestamp: 0,
-};
-
-const DEFAULT_SETTINGS: ExtensionSettings = {
-  matchingMode: "fuzzy",
 };
 
 export async function getSponsorCache(): Promise<SponsorCache | null> {
@@ -31,12 +27,6 @@ export async function updateStats(partial: Partial<ExtensionStats>): Promise<voi
   await chrome.storage.local.set({ [STATS_KEY]: { ...current, ...partial } });
 }
 
-export async function getSettings(): Promise<ExtensionSettings> {
-  const result = await chrome.storage.local.get(SETTINGS_KEY);
-  const stored = result[SETTINGS_KEY] as Partial<ExtensionSettings> | undefined;
-  return { ...DEFAULT_SETTINGS, ...(stored ?? {}) };
-}
-
-export async function setSettings(settings: ExtensionSettings): Promise<void> {
-  await chrome.storage.local.set({ [SETTINGS_KEY]: settings });
+export function isCacheStale(cache: SponsorCache): boolean {
+  return Date.now() - cache.fetchedAt > CACHE_MAX_AGE_MS;
 }

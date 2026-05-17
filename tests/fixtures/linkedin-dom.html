@@ -1,34 +1,46 @@
-<!-- Realistic LinkedIn job card structures using both known selector variants -->
+<!-- LinkedIn job card structure as of 2026-05 — base-search-card DOM -->
 
-<!-- Card 1: primary selector, job-card-container + primary-description -->
-<div class="job-card-container">
-  <h3 class="job-card-list__title">Software Engineer</h3>
-  <div class="job-card-container__primary-description">Booking.com</div>
+<!-- Card 1: valid, unprocessed -->
+<div class="base-card base-search-card">
+  <div class="base-search-card__info">
+    <h3 class="base-search-card__title">Software Engineer</h3>
+    <h4 class="base-search-card__subtitle">Booking.com</h4>
+  </div>
 </div>
 
-<!-- Card 2: secondary selector, jobs-search-results__list-item + artdeco subtitle -->
-<li class="jobs-search-results__list-item">
-  <h3 class="job-card-list__title">Hardware Engineer</h3>
-  <div class="artdeco-entity-lockup__subtitle">ASML Holding N.V.</div>
-</li>
+<!-- Card 2: valid, unprocessed -->
+<div class="base-card base-search-card">
+  <div class="base-search-card__info">
+    <h3 class="base-search-card__title">Hardware Engineer</h3>
+    <h4 class="base-search-card__subtitle">ASML Holding N.V.</h4>
+  </div>
+</div>
 
 <!-- Card 3: already processed — must be skipped by scanner -->
-<div class="job-card-container" data-dvs-checked="">
-  <div class="job-card-container__primary-description">Fake Corp Already Done</div>
+<div class="base-card base-search-card" data-dvs-checked="">
+  <div class="base-search-card__info">
+    <h4 class="base-search-card__subtitle">Fake Corp Already Done</h4>
+  </div>
 </div>
 
 <!-- Card 4: no company name element — must be skipped -->
-<div class="job-card-container">
-  <h3 class="job-card-list__title">Designer</h3>
+<div class="base-card base-search-card">
+  <div class="base-search-card__info">
+    <h3 class="base-search-card__title">Designer</h3>
+  </div>
 </div>
 
 <!-- Card 5: whitespace-only company name — must be skipped -->
-<div class="job-card-container">
-  <div class="job-card-container__primary-description">   </div>
+<div class="base-card base-search-card">
+  <div class="base-search-card__info">
+    <h4 class="base-search-card__subtitle">   </h4>
+  </div>
 </div>
 
-<!-- Card 6: Adyen, unprocessed -->
-<div class="job-card-container">
-  <h3 class="job-card-list__title">Product Manager</h3>
-  <div class="job-card-container__primary-description">Adyen</div>
+<!-- Card 6: valid, unprocessed -->
+<div class="base-card base-search-card">
+  <div class="base-search-card__info">
+    <h3 class="base-search-card__title">Product Manager</h3>
+    <h4 class="base-search-card__subtitle">Adyen</h4>
+  </div>
 </div>

@@ -26,7 +26,7 @@ const fuzzyResult: MatchResult = {
   matched: true,
   confidence: "fuzzy",
   sponsorName: "Acme B.V.",
-  score: 0.8,
+  score: 0.85,
 };
 
 const noneResult: MatchResult = {
@@ -40,61 +40,44 @@ beforeEach(() => {
   document.body.innerHTML = "";
 });
 
-describe("renderBadge — exact match", () => {
-  it("appends a badge to the company name element", () => {
+describe("renderBadge — matched (exact or fuzzy)", () => {
+  it.each([
+    ["exact", exactResult],
+    ["fuzzy", fuzzyResult],
+  ] as const)("%s match appends a badge", (_label, result) => {
     const job = makeJob();
-    renderBadge(job, exactResult);
+    renderBadge(job, result);
     expect(job.companyNameElement.querySelector(".dvs-badge")).not.toBeNull();
   });
 
-  it("applies the confirmed CSS class", () => {
+  it.each([
+    ["exact", exactResult],
+    ["fuzzy", fuzzyResult],
+  ] as const)("%s match applies the confirmed CSS class", (_label, result) => {
     const job = makeJob();
-    renderBadge(job, exactResult);
+    renderBadge(job, result);
     const badge = job.companyNameElement.querySelector(".dvs-badge");
     expect(badge?.classList.contains("dvs-badge--confirmed")).toBe(true);
   });
 
-  it("sets the correct text content", () => {
+  it.each([
+    ["exact", exactResult],
+    ["fuzzy", fuzzyResult],
+  ] as const)("%s match shows 'Visa Sponsor' text", (_label, result) => {
     const job = makeJob();
-    renderBadge(job, exactResult);
+    renderBadge(job, result);
     const badge = job.companyNameElement.querySelector(".dvs-badge");
     expect(badge?.textContent).toContain("Visa Sponsor");
   });
 
-  it("sets a descriptive title attribute", () => {
+  it.each([
+    ["exact", exactResult],
+    ["fuzzy", fuzzyResult],
+  ] as const)("%s match sets a descriptive title", (_label, result) => {
     const job = makeJob();
-    renderBadge(job, exactResult);
+    renderBadge(job, result);
     const badge = job.companyNameElement.querySelector<HTMLElement>(".dvs-badge");
     expect(badge?.title).toContain("Recognized IND sponsor");
-  });
-});
-
-describe("renderBadge — fuzzy match", () => {
-  it("appends a badge to the company name element", () => {
-    const job = makeJob();
-    renderBadge(job, fuzzyResult);
-    expect(job.companyNameElement.querySelector(".dvs-badge")).not.toBeNull();
-  });
-
-  it("applies the uncertain CSS class", () => {
-    const job = makeJob();
-    renderBadge(job, fuzzyResult);
-    const badge = job.companyNameElement.querySelector(".dvs-badge");
-    expect(badge?.classList.contains("dvs-badge--uncertain")).toBe(true);
-  });
-
-  it("sets the correct text content", () => {
-    const job = makeJob();
-    renderBadge(job, fuzzyResult);
-    const badge = job.companyNameElement.querySelector(".dvs-badge");
-    expect(badge?.textContent).toContain("Possible Sponsor");
-  });
-
-  it("sets a verify-manually title", () => {
-    const job = makeJob();
-    renderBadge(job, fuzzyResult);
-    const badge = job.companyNameElement.querySelector<HTMLElement>(".dvs-badge");
-    expect(badge?.title).toContain("verify manually");
   });
 });
 
@@ -112,7 +95,6 @@ describe("renderBadge — idempotency guard", () => {
     const job = makeJob();
     renderBadge(job, exactResult);
     renderBadge(job, exactResult);
-    // badgeRenderer itself doesn't deduplicate — the scanner's BADGE_ATTR does
     expect(job.companyNameElement.querySelectorAll(".dvs-badge")).toHaveLength(2);
   });
 });

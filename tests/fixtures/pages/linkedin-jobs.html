@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Jobs | LinkedIn (Test Fixture)</title>
+  <style>
+    body { font-family: -apple-system, sans-serif; padding: 20px; }
+    .base-search-card { border: 1px solid #ddd; padding: 16px; margin-bottom: 8px; border-radius: 8px; }
+    .base-search-card__subtitle { color: #666; font-size: 14px; }
+    .base-search-card__title { font-weight: 600; font-size: 16px; }
+  </style>
+</head>
+<body>
+<main>
+  <div class="scaffold-layout__list">
+    <ul class="jobs-search-results__list">
+      <li>
+        <div class="base-card base-search-card" data-job-id="001">
+          <div class="base-search-card__info">
+            <h3 class="base-search-card__title">Software Engineer</h3>
+            <h4 class="base-search-card__subtitle">Booking.com</h4>
+          </div>
+        </div>
+      </li>
+      <li>
+        <div class="base-card base-search-card" data-job-id="002">
+          <div class="base-search-card__info">
+            <h3 class="base-search-card__title">Data Analyst</h3>
+            <h4 class="base-search-card__subtitle">Adyen N.V.</h4>
+          </div>
+        </div>
+      </li>
+      <li>
+        <div class="base-card base-search-card" data-job-id="003">
+          <div class="base-search-card__info">
+            <h3 class="base-search-card__title">Product Manager</h3>
+            <h4 class="base-search-card__subtitle">UBER</h4>
+          </div>
+        </div>
+      </li>
+      <li>
+        <div class="base-card base-search-card" data-job-id="004">
+          <div class="base-search-card__info">
+            <h3 class="base-search-card__title">Designer</h3>
+            <h4 class="base-search-card__subtitle">FakeStartup Inc.</h4>
+          </div>
+        </div>
+      </li>
+      <li>
+        <div class="base-card base-search-card" data-job-id="005">
+          <div class="base-search-card__info">
+            <h3 class="base-search-card__title">Lithography Engineer</h3>
+            <h4 class="base-search-card__subtitle">ASML Holding N.V.</h4>
+          </div>
+        </div>
+      </li>
+      <li>
+        <div class="base-card base-search-card" data-job-id="006">
+          <div class="base-search-card__info">
+            <h3 class="base-search-card__title">Mystery Role</h3>
+            <h4 class="base-search-card__subtitle"></h4>
+          </div>
+        </div>
+      </li>
+      <li>
+        <div class="base-card base-search-card" data-job-id="007">
+          <div class="base-search-card__info">
+            <h3 class="base-search-card__title">Backend Engineer</h3>
+            <h4 class="base-search-card__subtitle">Shell</h4>
+          </div>
+        </div>
+      </li>
+      <li>
+        <div class="base-card base-search-card" data-job-id="008">
+          <div class="base-search-card__info">
+            <h3 class="base-search-card__title">ML Engineer</h3>
+            <h4 class="base-search-card__subtitle">TomTom N.V.</h4>
+          </div>
+        </div>
+      </li>
+      <li>
+        <div class="base-card base-search-card" data-job-id="009">
+          <div class="base-search-card__info">
+            <h3 class="base-search-card__title">Finance Analyst</h3>
+            <h4 class="base-search-card__subtitle">ING Group N.V.</h4>
+          </div>
+        </div>
+      </li>
+      <li>
+        <div class="base-card base-search-card" data-job-id="010">
+          <div class="base-search-card__info">
+            <h3 class="base-search-card__title">QA Engineer</h3>
+            <h4 class="base-search-card__subtitle">Philips</h4>
+          </div>
+        </div>
+      </li>
+    </ul>
+  </div>
+</main>
+<script>
+  window.__injectScrollCards = function () {
+    var list = document.querySelector('.jobs-search-results__list');
+    list.insertAdjacentHTML('beforeend',
+      '<li><div class="base-card base-search-card" data-job-id="011">' +
+      '<div class="base-search-card__info">' +
+      '<h3 class="base-search-card__title">SRE</h3>' +
+      '<h4 class="base-search-card__subtitle">Booking.com B.V.</h4>' +
+      '</div></div></li>'
+    );
+  };
+</script>
+</body>
+</html>

@@ -51,41 +51,6 @@ section {
   color: #1f2937;
 }
 
-.setting-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.setting-label {
-  color: #6b7280;
-}
-
-.toggle-group {
-  display: flex;
-  gap: 4px;
-}
-
-.toggle-btn {
-  padding: 4px 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
-  background: #f9fafb;
-  color: #374151;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.toggle-btn:hover {
-  background: #e5e7eb;
-}
-
-.toggle-btn--active {
-  background: #1e3a5f;
-  border-color: #1e3a5f;
-  color: #ffffff;
-}
-
 .actions {
   border-bottom: none;
   display: flex;

@@ -18,7 +18,6 @@ export function buildSponsorIndex(sponsors: SponsorEntry[]): SponsorIndex {
 export function isRecognizedSponsor(
   companyName: string,
   index: SponsorIndex,
-  mode: "strict" | "fuzzy"
 ): MatchResult {
   const normalizedInput = normalize(companyName);
 
@@ -30,10 +29,6 @@ export function isRecognizedSponsor(
       sponsorName: exactMatch.originalName,
       score: 1.0,
     };
-  }
-
-  if (mode === "strict") {
-    return { matched: false, confidence: "none", sponsorName: null, score: 0 };
   }
 
   const inputTokens = tokenize(normalizedInput);
@@ -52,7 +47,10 @@ export function isRecognizedSponsor(
     for (const token of inputSet) {
       if (sponsorSet.has(token)) overlap++;
     }
-    const score = overlap / Math.max(inputTokens.length, sponsor.tokens.length);
+    // Use min so that a shorter display name (e.g. "Hadrian") can fully match
+    // a longer registered name (e.g. "Hadrian Security B.V.") when all input
+    // tokens appear in the sponsor's token set.
+    const score = overlap / Math.min(inputTokens.length, sponsor.tokens.length);
     if (score > bestScore) {
       bestScore = score;
       bestSponsor = sponsor;
@@ -60,9 +58,12 @@ export function isRecognizedSponsor(
   }
 
   if (bestScore >= FUZZY_THRESHOLD && bestSponsor) {
+    // score of 1.0 means every input token appeared in the sponsor — treat as
+    // confirmed since the display name is just a shorter form of the registered name.
+    const confidence = bestScore === 1.0 ? "exact" : "fuzzy";
     return {
       matched: true,
-      confidence: "fuzzy",
+      confidence,
       sponsorName: bestSponsor.originalName,
       score: bestScore,
     };

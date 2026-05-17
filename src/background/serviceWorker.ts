@@ -1,5 +1,5 @@
 import { fetchAndBuildCache } from "../shared/sponsorFetcher";
-import { getSponsorCache, getStats, setSponsorCache, updateStats } from "../shared/storage";
+import { getSponsorCache, getStats, isCacheStale, setSponsorCache, updateStats } from "../shared/storage";
 import type { MessageType, SponsorCache } from "../shared/types";
 
 const ALARM_NAME = "refresh-sponsors";
@@ -44,8 +44,19 @@ export async function dispatchMessage(
   }
 }
 
+export async function handleStartup(): Promise<void> {
+  const cache = await getSponsorCache();
+  if (!cache || isCacheStale(cache)) {
+    await fetchAndCacheSponsors();
+  }
+}
+
 chrome.runtime.onInstalled.addListener(() => {
   handleInstall().catch(console.error);
+});
+
+chrome.runtime.onStartup.addListener(() => {
+  handleStartup().catch(console.error);
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {

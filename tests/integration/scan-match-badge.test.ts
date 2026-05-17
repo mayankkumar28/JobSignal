@@ -54,12 +54,14 @@ describe("scan → match → badge pipeline", () => {
     expect(result.confidence).toBe("exact");
   });
 
-  it("TomTom N.V. matches TomTom Global Content B.V. as confirmed (all input tokens found)", () => {
+  it("TomTom N.V. does NOT match TomTom Global Content B.V. — they are different sponsor entities", () => {
+    // Tightened policy: "TomTom N.V." normalizes to single token "tomtom"; the
+    // fixture only registers "TomTom Global Content B.V." (3-token sponsor).
+    // Under the ≥2-token subset rule, this no longer produces a misleading badge.
     const jobs = scanVisibleJobs();
     const tomtom = jobs.find((j) => j.companyName === "TomTom N.V.")!;
     const result = isRecognizedSponsor(tomtom.companyName, index);
-    expect(result.matched).toBe(true);
-    expect(result.confidence).toBe("exact");
+    expect(result.matched).toBe(false);
   });
 
   it("no duplicate badges when called twice on the same fixture", () => {
@@ -77,7 +79,7 @@ describe("scan → match → badge pipeline", () => {
 
   it("every card in the fixture gets BADGE_ATTR after scan (prevents re-scan)", () => {
     scanVisibleJobs().forEach((j) =>
-      renderBadge(j, isRecognizedSponsor(j.companyName, index, "strict")),
+      renderBadge(j, isRecognizedSponsor(j.companyName, index)),
     );
     // All 9 scannable cards (10 total minus 1 with empty name) should be stamped.
     const stamped = document.querySelectorAll("[data-dvs-checked]");

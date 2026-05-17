@@ -1,7 +1,18 @@
 import { DUTCH_SUFFIXES } from "./constants";
 
 export function normalize(name: string): string {
-  let s = name.toLowerCase();
+  // NFKD decomposes accented chars (é → e + ́); \p{M} strips the combining marks.
+  // Without this, the [^a-z0-9\s] replacement would discard accented letters and
+  // mangle Dutch/EU names ("Société" → "soci t" rather than "societe").
+  let s = name.normalize("NFKD").replace(/\p{M}/gu, "");
+  // NFKD does not decompose precomposed ligatures; map the common European ones
+  // by hand so they survive the ASCII filter below.
+  s = s
+    .replace(/[æÆ]/g, "ae")
+    .replace(/[œŒ]/g, "oe")
+    .replace(/[øØ]/g, "o")
+    .replace(/ß/g, "ss");
+  s = s.toLowerCase();
   s = s.replace(/[^a-z0-9\s]/g, " ");
   s = s.replace(/\s+/g, " ").trim();
   s = stripSuffixes(s);

@@ -26,6 +26,7 @@ export const DUTCH_SUFFIXES = [
   "holding",
   "group",
   "netherlands",
+  "nederland", // Dutch spelling — appears throughout the IND register
   "international",
   "europe",
   "the netherlands",

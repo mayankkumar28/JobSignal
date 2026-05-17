@@ -13,6 +13,9 @@ describe("normalize", () => {
     ["", ""],
     ["Philips International B.V.", "philips"],
     ["KPMG Europe LLP", "kpmg europe llp"], // non-Dutch suffix, untouched
+    ["Société Générale Nederland B.V.", "societe generale"],
+    ["Café de Pelikaan B.V.", "cafe de pelikaan"],
+    ["Brüel & Kjær Nederland B.V.", "bruel kjaer"],
   ];
 
   it.each(cases)('normalize("%s") → "%s"', (input, expected) => {

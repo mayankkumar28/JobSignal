@@ -36,6 +36,14 @@ export function isRecognizedSponsor(
     return { matched: false, confidence: "none", sponsorName: null, score: 0 };
   }
 
+  // Subset matching (Math.min denominator) is gated behind ≥2 input tokens.
+  // A single-token input like "Tech" or "Apple" would otherwise score 1.0
+  // against any sponsor whose normalized name happens to contain that token,
+  // producing confident false positives. Single-token inputs can still match
+  // via the exact map above; if they miss it, fuzzy uses sponsor.tokens.length
+  // as the denominator (a stricter rule that single-token inputs cannot game).
+  const allowSubsetMatch = inputTokens.length >= 2;
+
   const inputSet = new Set(inputTokens);
   let bestScore = 0;
   let bestSponsor: SponsorEntry | null = null;
@@ -47,10 +55,10 @@ export function isRecognizedSponsor(
     for (const token of inputSet) {
       if (sponsorSet.has(token)) overlap++;
     }
-    // Use min so that a shorter display name (e.g. "Hadrian") can fully match
-    // a longer registered name (e.g. "Hadrian Security B.V.") when all input
-    // tokens appear in the sponsor's token set.
-    const score = overlap / Math.min(inputTokens.length, sponsor.tokens.length);
+    const denominator = allowSubsetMatch
+      ? Math.min(inputTokens.length, sponsor.tokens.length)
+      : sponsor.tokens.length;
+    const score = overlap / denominator;
     if (score > bestScore) {
       bestScore = score;
       bestSponsor = sponsor;

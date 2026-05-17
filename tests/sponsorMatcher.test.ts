@@ -56,12 +56,27 @@ describe("isRecognizedSponsor", () => {
     expect(result.matched).toBe(false);
   });
 
-  it('"Hadrian" matches "Hadrian Security B.V." as confirmed (all input tokens found)', () => {
+  it('"Hadrian" alone (single token) no longer matches "Hadrian Security B.V."', () => {
+    // Tightened policy: single-token inputs cannot use the subset denominator.
+    // A bare "Hadrian" is ambiguous (could be any Hadrian-prefixed company).
     const result = isRecognizedSponsor("Hadrian", index);
+    expect(result.matched).toBe(false);
+    expect(result.confidence).toBe("none");
+  });
+
+  it('"Hadrian Security" (≥2 tokens) still matches "Hadrian Security B.V."', () => {
+    const result = isRecognizedSponsor("Hadrian Security", index);
     expect(result.matched).toBe(true);
     expect(result.confidence).toBe("exact");
     expect(result.score).toBe(1.0);
     expect(result.sponsorName).toBe("Hadrian Security B.V.");
+  });
+
+  it('single-token generic word does not match a multi-token sponsor (no false positive)', () => {
+    // "Security" appears as a token inside "Hadrian Security B.V." but should
+    // never match on its own. Before the ≥2-token gate, this scored 1.0/1 = 1.0.
+    const result = isRecognizedSponsor("Security", index);
+    expect(result.matched).toBe(false);
   });
 });
 

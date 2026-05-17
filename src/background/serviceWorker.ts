@@ -56,6 +56,14 @@ export async function dispatchMessage(
       await updateStats(message.payload);
       sendResponse(null);
       break;
+    default: {
+      // Exhaustiveness check: if a new MessageType variant is added without a
+      // case here, TS errors at compile time. At runtime, we still respond so
+      // the caller's Promise resolves rather than hanging until channel close.
+      const _exhaustive: never = message;
+      void _exhaustive;
+      sendResponse({ error: "unknown message type" });
+    }
   }
 }
 

@@ -34,10 +34,22 @@ let initialized = false;
 // re-running the full async init (cache fetch + index build).
 let processBatch: (() => void) | null = null;
 
+// Single rescan timer shared by all SPA-nav and pageload entry points so
+// rapid pagination clicks don't queue up redundant scans.
+const RESCAN_DELAY_MS = 600;
+let rescanTimer: ReturnType<typeof setTimeout> | null = null;
+function scheduleRescan(): void {
+  if (rescanTimer !== null) clearTimeout(rescanTimer);
+  rescanTimer = setTimeout(() => {
+    rescanTimer = null;
+    processBatch?.();
+  }, RESCAN_DELAY_MS);
+}
+
 export async function init(): Promise<void> {
   if (initialized) {
     // Already set up — just re-scan the freshly rendered DOM.
-    setTimeout(() => processBatch?.(), 600);
+    scheduleRescan();
     return;
   }
   if (!chrome.runtime?.id) return;
@@ -102,7 +114,7 @@ export async function init(): Promise<void> {
 const origPush = history.pushState.bind(history);
 history.pushState = function (...args: Parameters<typeof history.pushState>) {
   origPush(...args);
-  if (isJobsPage()) setTimeout(() => init().catch(console.error), 500);
+  if (isJobsPage()) init().catch(console.error);
 };
 window.addEventListener("popstate", () => {
   if (isJobsPage()) init().catch(console.error);

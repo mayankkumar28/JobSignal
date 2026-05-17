@@ -30,7 +30,9 @@ The sponsor list is cached locally and refreshed automatically on browser start 
 
 ## Matching
 
-Name normalisation strips Dutch legal suffixes (B.V., N.V., Holding, Netherlands, …) iteratively until stable, then does an exact map lookup. If that misses, token-overlap fuzzy scoring runs against all entries — a match requires >80% token overlap. Short display names like `"Hadrian"` correctly match `"Hadrian Security B.V."` because the score denominator is `Math.min(input tokens, candidate tokens)`, so all-input-tokens-matched = score 1.0.
+Name normalisation lower-cases, NFKD-folds accented characters (so `"Société"` → `"societe"`), maps the common European ligatures (`æ → ae`, `ø → o`, `ß → ss`), and iteratively strips Dutch legal suffixes (`B.V.`, `N.V.`, `Holding`, `Netherlands`, `Nederland`, …) until the name is stable. The result is looked up in an exact map first.
+
+If that misses, token-overlap fuzzy scoring runs against all entries with `FUZZY_THRESHOLD = 0.8`. Subset matching (where the input is a short version of a longer registered name — `"Hadrian Security"` → `"Hadrian Security B.V."`) uses `Math.min(input, sponsor)` as the denominator, **but only when the input has at least two tokens**. Single-token inputs use `sponsor.tokens.length` as denominator so generic one-word inputs (`"Tech"`, `"Apple"`) can't accidentally hit any sponsor whose normalized name happens to contain the same token.
 
 ## Development setup
 
@@ -158,3 +160,14 @@ The extension:
 - Makes **one outbound network request** — to `ind.nl` to fetch the public sponsor register
 - Stores the sponsor list and usage stats in `chrome.storage.local` (never synced, never sent anywhere)
 - Does **not** collect, transmit, or share any personal data or browsing history
+
+### Permissions
+
+| Permission | Purpose |
+|---|---|
+| `storage` | Caches the sponsor list and usage stats in `chrome.storage.local` |
+| `alarms` | Schedules the 30-day periodic refresh of the sponsor list |
+| `host_permissions: https://ind.nl/*` | Allows the service worker to fetch the public sponsor register |
+| `content_scripts: https://www.linkedin.com/*` | Injects the scanner + badge renderer on LinkedIn pages |
+
+No `<all_urls>` or `tabs` permission. The content script's match pattern is intentionally broader than `/jobs/*` so that the SPA navigation hook can install before the user clicks into the jobs section — but it early-returns on every non-`/jobs/*` pathname.

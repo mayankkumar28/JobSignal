@@ -6,12 +6,12 @@ A Chrome Extension (Manifest V3) that overlays LinkedIn job listings with signal
 
 While browsing `linkedin.com/jobs`, the extension:
 
-- Scans every visible job card for the company name
+- Scans every visible job card for the company name — both the left-panel list and the right-panel detail view
 - Matches it against the [IND public register of recognised sponsors](https://ind.nl/en/public-register-recognised-sponsors/public-register-work) (12,000+ entries)
-- Injects an inline badge — **🇳🇱 Visa Sponsor** (green) for confirmed matches, **⚠ Possible Sponsor** (amber) for fuzzy matches
-- Continues scanning as you scroll or navigate within the LinkedIn SPA
+- Injects an inline badge — **🇳🇱 Visa Sponsor** (green) for confirmed matches
+- Continues scanning as you scroll, paginate, or navigate within the LinkedIn SPA
 
-The sponsor list is cached locally for 30 days and refreshed automatically.
+The sponsor list is cached locally and refreshed automatically on browser start if stale (30-day TTL).
 
 ## Screenshots
 
@@ -21,28 +21,22 @@ The sponsor list is cached locally for 30 days and refreshed automatically.
 │  Booking.com  🇳🇱 Visa Sponsor         │  ← confirmed match
 ├────────────────────────────────────────┤
 │  Data Analyst                          │
-│  Some Startup  ⚠ Possible Sponsor      │  ← fuzzy match
+│  Adyen N.V.   🇳🇱 Visa Sponsor         │  ← fuzzy match (score = 1.0)
 ├────────────────────────────────────────┤
 │  Product Manager                       │
 │  Unknown Corp                          │  ← no badge
 └────────────────────────────────────────┘
 ```
 
-## Matching modes
+## Matching
 
-| Mode | Behaviour |
-|------|-----------|
-| **Strict** | Exact match only after name normalisation (strips legal suffixes like B.V., N.V., Holding, Netherlands). Zero false positives. |
-| **Fuzzy** | Adds token-overlap scoring. Catches variants like `"Booking"` vs `"Booking.com B.V."`. May produce occasional false positives. |
-
-Switch between modes from the popup.
+Name normalisation strips Dutch legal suffixes (B.V., N.V., Holding, Netherlands, …) iteratively until stable, then does an exact map lookup. If that misses, token-overlap fuzzy scoring runs against all entries — a match requires >80% token overlap. Short display names like `"Hadrian"` correctly match `"Hadrian Security B.V."` because the score denominator is `Math.min(input tokens, candidate tokens)`, so all-input-tokens-matched = score 1.0.
 
 ## Development setup
 
 ```bash
-cd linkedin-hsm-extension
 npm install
-npm run dev        # build to dist/ with watch mode
+npm run dev        # webpack watch mode → dist/
 ```
 
 Load the extension in Chrome:
@@ -63,8 +57,16 @@ Output lands in `dist/`. Load `dist/` as an unpacked extension or zip it for the
 ## Running tests
 
 ```bash
-npm test           # single run (112 tests, ~1 s)
-npm run test:watch # watch mode
+npm test                    # unit + integration (143 tests, ~1 s)
+npm run test:watch          # watch mode
+npm run test:e2e            # Playwright fixture e2e (17 tests, ~1.5 min)
+```
+
+Run a single file or pattern:
+
+```bash
+npx vitest run tests/normalizer.test.ts
+npx vitest run -t "exact match"
 ```
 
 ## Linting
@@ -79,12 +81,9 @@ The extension ships with a bundled fallback (`src/data/sponsors-snapshot.json`) 
 
 ```bash
 npm run update-snapshot
-# → fetches ind.nl, writes src/data/sponsors-snapshot.json, prints count
 git add src/data/sponsors-snapshot.json
 git commit -m "chore: refresh IND sponsor snapshot"
 ```
-
-The IND register updates monthly. The extension also auto-fetches on install and every 30 days via `chrome.alarms`.
 
 ## Updating LinkedIn selectors
 
@@ -92,8 +91,10 @@ LinkedIn changes their DOM periodically. If badges stop appearing:
 
 1. Open DevTools on a LinkedIn jobs page
 2. Inspect a job card and find the current class names
-3. Update `LINKEDIN_SELECTORS` in `src/shared/constants.ts`
+3. Update selectors in `src/content/linkedinScanner.ts`
 4. Rebuild and reload the extension
+
+A weekly canary workflow (`linkedin-canary.yml`) runs Playwright against the live LinkedIn guest DOM and opens a GitHub issue if the selectors break.
 
 ## Architecture
 
@@ -103,22 +104,30 @@ src/
 │   └── serviceWorker.ts   IND fetch, alarm scheduling, message dispatcher
 ├── content/
 │   ├── index.ts           Entry point — orchestrates scan → match → badge
-│   ├── linkedinScanner.ts Finds unprocessed job cards, extracts company names
+│   ├── linkedinScanner.ts Finds unprocessed job cards (guest, left panel, right panel)
 │   ├── badgeRenderer.ts   Injects badge <span> elements into the DOM
-│   ├── domObserver.ts     MutationObserver + popstate/hashchange for SPA nav
+│   ├── domObserver.ts     MutationObserver on document.body for SPA nav
 │   └── badges.css         Badge pill styles
 ├── popup/
-│   ├── popup.html/ts/css  Stats display, mode toggle, refresh button
+│   ├── popup.html/ts/css  Stats display + refresh button
 └── shared/
     ├── types.ts            Shared TypeScript interfaces
-    ├── constants.ts        Selectors, keys, thresholds, Dutch legal suffixes
+    ├── constants.ts        Keys, thresholds, Dutch legal suffixes
     ├── normalizer.ts       Name normalisation pipeline (lowercase → strip suffixes)
     ├── sponsorMatcher.ts   Exact + token-overlap fuzzy matching engine
     ├── sponsorFetcher.ts   IND HTML fetch + parser + cache builder
     └── storage.ts          chrome.storage.local wrapper
 ```
 
-**Data flow (initial load):**
+**LinkedIn scanner strategies:**
+
+| Strategy | DOM pattern | When |
+|----------|-------------|------|
+| Guest | `.base-search-card` + `.base-search-card__subtitle` | Logged-out view |
+| Left panel | `img[src*="company-logo"]` → `[role="button"]` → first plain-text `<p>` | Logged-in job list |
+| Right panel | `a[href*="/jobs/view/"]` + `[aria-label^="Company, "]` | Logged-in detail view |
+
+**Data flow:**
 
 ```
 LinkedIn /jobs page loads
@@ -126,19 +135,21 @@ LinkedIn /jobs page loads
   → service worker returns cached SponsorCache
   → content script builds SponsorIndex (O(1) Map)
   → scanVisibleJobs() → isRecognizedSponsor() → renderBadge()
-  → MutationObserver watches for new cards as user scrolls
+  → MutationObserver + pushState hook watch for new cards / SPA navigation
 ```
 
 ## Tech stack
 
 | Tool | Purpose |
 |------|---------|
-| TypeScript 5 | Language |
+| TypeScript 6 | Language |
 | Webpack 5 | Bundler (3 entry points, no code splitting) |
 | ts-loader | TypeScript compilation in webpack |
-| Vitest | Unit tests (112 tests across 9 files) |
-| jsdom | DOM environment for content script tests |
-| ESLint 9 + typescript-eslint | Linting |
+| Vitest 4 | Unit + integration tests |
+| Playwright | E2E tests (fixture server + live LinkedIn canary) |
+| jsdom | DOM environment for content script unit tests |
+| ESLint 10 + typescript-eslint | Linting |
+| Node.js 24 | Runtime (CI + local dev) |
 
 ## Privacy
 
@@ -147,4 +158,3 @@ The extension:
 - Makes **one outbound network request** — to `ind.nl` to fetch the public sponsor register
 - Stores the sponsor list and usage stats in `chrome.storage.local` (never synced, never sent anywhere)
 - Does **not** collect, transmit, or share any personal data or browsing history
-

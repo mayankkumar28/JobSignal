@@ -23,7 +23,7 @@
     "update-snapshot": "node scripts/update-snapshot.js"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
+    "@eslint/js": "^9.39.4",
     "@playwright/test": "^1.60.0",
     "@types/chrome": "^0.0.268",
     "@types/jsdom": "^28.0.3",

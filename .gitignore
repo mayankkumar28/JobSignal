@@ -3,6 +3,8 @@ node_modules/
 
 # Build output
 dist/
+dist-test/
+coverage/
 
 # Claude Code specific
 .claude/
@@ -34,5 +36,6 @@ test-results/
 playwright-report/
 diagnose-screenshot.png
 diagnose-live-screenshot.png
+diagnose-fixture-screenshot.png
 
 creds.txt

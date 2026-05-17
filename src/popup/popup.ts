@@ -46,6 +46,9 @@ export async function handleRefresh(): Promise<void> {
     document.getElementById("last-synced")!.textContent = formatDate(cache.fetchedAt);
     statusEl.textContent = `Updated — ${cache.sponsors.length.toLocaleString()} sponsors loaded`;
     statusEl.hidden = false;
+    // Re-pull running stats so the popup shows the values the service worker
+    // has after refresh, not the stale numbers from when the popup opened.
+    await loadStats();
   } catch {
     statusEl.textContent = "Refresh failed — try again";
     statusEl.hidden = false;

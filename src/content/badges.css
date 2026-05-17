@@ -11,6 +11,11 @@
   vertical-align: middle;
   cursor: default;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  /* The badge is appended inside LinkedIn's company-name anchor. Without this
+     rule, clicking the badge navigates to the company page instead of doing
+     nothing. pointer-events: none lets the click fall through to the anchor
+     (or, if the badge is the only child, do nothing). */
+  pointer-events: none;
 }
 
 .dvs-badge--confirmed {

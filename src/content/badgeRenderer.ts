@@ -7,7 +7,7 @@ export function renderBadge(job: ScannedJob, result: MatchResult): void {
   const badge = document.createElement("span");
   badge.textContent = "🇳🇱 Visa Sponsor";
   badge.className = "dvs-badge dvs-badge--confirmed";
-  badge.title = "Recognized IND sponsor for Netherlands Highly Skilled Migrant visa";
+  badge.title = "Recognized IND sponsor on the public register";
 
   job.companyNameElement.appendChild(badge);
 }

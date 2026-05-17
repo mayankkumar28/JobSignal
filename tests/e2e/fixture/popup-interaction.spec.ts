@@ -19,7 +19,7 @@ test("popup shows non-zero companies-scanned after extension processes fixture p
   const { context, extensionId } = await launchWithExtension();
   const page = await context.newPage();
 
-  await page.goto(`http://localhost:${PORT}/linkedin-jobs.html`);
+  await page.goto(`http://localhost:${PORT}/jobs/linkedin-jobs.html`);
   await waitForConfirmedBadge(page);
   // Allow UPDATE_STATS message to propagate to the service worker
   await page.waitForTimeout(1000);
@@ -37,7 +37,7 @@ test("popup shows non-zero sponsors-found after processing fixture page", async 
   const { context, extensionId } = await launchWithExtension();
   const page = await context.newPage();
 
-  await page.goto(`http://localhost:${PORT}/linkedin-jobs.html`);
+  await page.goto(`http://localhost:${PORT}/jobs/linkedin-jobs.html`);
   await waitForConfirmedBadge(page);
   await page.waitForTimeout(1000);
 

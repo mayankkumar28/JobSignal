@@ -8,9 +8,13 @@ const FIXTURES_DIR = path.resolve(process.cwd(), "tests/fixtures/pages");
 export function startFixtureServer(): Promise<{ server: http.Server; port: number }> {
   return new Promise((resolve) => {
     const server = http.createServer((req, res) => {
+      // Strip a leading /jobs prefix so the content script's isJobsPage() check
+      // (pathname.startsWith("/jobs")) passes, while the file still resolves to
+      // the flat fixtures/pages/ directory.
+      const urlPath = (req.url ?? "/").replace(/^\/jobs/, "") || "/";
       const filePath = path.join(
         FIXTURES_DIR,
-        req.url === "/" ? "linkedin-jobs.html" : req.url!,
+        urlPath === "/" ? "linkedin-jobs.html" : urlPath,
       );
       if (fs.existsSync(filePath)) {
         res.writeHead(200, { "Content-Type": "text/html" });

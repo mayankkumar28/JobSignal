@@ -19,7 +19,7 @@ test("new card injected after initial scan gets a badge via MutationObserver", a
   const { context } = await launchWithExtension();
   const page = await context.newPage();
 
-  await page.goto(`http://localhost:${PORT}/linkedin-jobs.html`);
+  await page.goto(`http://localhost:${PORT}/jobs/linkedin-jobs.html`);
   await waitForConfirmedBadge(page);
 
   const beforeCount = await page.locator(".dvs-badge").count();
@@ -40,7 +40,7 @@ test("scroll event triggers rescan and badges appear on newly visible cards", as
   const { context } = await launchWithExtension();
   const page = await context.newPage();
 
-  await page.goto(`http://localhost:${PORT}/linkedin-jobs.html`);
+  await page.goto(`http://localhost:${PORT}/jobs/linkedin-jobs.html`);
   await waitForConfirmedBadge(page);
 
   const before = await page.locator(".dvs-badge").count();

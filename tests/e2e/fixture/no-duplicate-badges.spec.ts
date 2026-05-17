@@ -19,7 +19,7 @@ test("rescanning a card that already has a badge does not add a second one", asy
   const { context } = await launchWithExtension();
   const page = await context.newPage();
 
-  await page.goto(`http://localhost:${PORT}/linkedin-jobs.html`);
+  await page.goto(`http://localhost:${PORT}/jobs/linkedin-jobs.html`);
   await waitForConfirmedBadge(page);
 
   const card = page.locator('[data-job-id="001"]');
@@ -44,7 +44,7 @@ test("BADGE_ATTR on both li and inner div prevents any duplicate across both sel
   const { context } = await launchWithExtension();
   const page = await context.newPage();
 
-  await page.goto(`http://localhost:${PORT}/linkedin-jobs.html`);
+  await page.goto(`http://localhost:${PORT}/jobs/linkedin-jobs.html`);
   await waitForConfirmedBadge(page);
   await page.waitForTimeout(500);
 

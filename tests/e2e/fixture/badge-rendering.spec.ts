@@ -19,7 +19,7 @@ test("confirmed sponsor (Booking.com) shows green badge", async () => {
   const { context } = await launchWithExtension();
   const page = await context.newPage();
 
-  await page.goto(`http://localhost:${PORT}/linkedin-jobs.html`);
+  await page.goto(`http://localhost:${PORT}/jobs/linkedin-jobs.html`);
   await waitForConfirmedBadge(page);
 
   const badge = await getBadgeOnCard(page, "001");
@@ -35,7 +35,7 @@ test("unknown company (FakeStartup Inc.) receives no badge", async () => {
   const { context } = await launchWithExtension();
   const page = await context.newPage();
 
-  await page.goto(`http://localhost:${PORT}/linkedin-jobs.html`);
+  await page.goto(`http://localhost:${PORT}/jobs/linkedin-jobs.html`);
   await waitForConfirmedBadge(page); // wait for extension to finish processing
 
   const badgeCount = await page.locator('[data-job-id="004"] .dvs-badge').count();
@@ -47,7 +47,7 @@ test("ASML Holding N.V. matches ASML Netherlands B.V. via normalisation", async 
   const { context } = await launchWithExtension();
   const page = await context.newPage();
 
-  await page.goto(`http://localhost:${PORT}/linkedin-jobs.html`);
+  await page.goto(`http://localhost:${PORT}/jobs/linkedin-jobs.html`);
   await waitForConfirmedBadge(page);
 
   const badge = await getBadgeOnCard(page, "005");
@@ -59,7 +59,7 @@ test("UBER matches Uber Netherlands B.V. — case-insensitive normalisation", as
   const { context } = await launchWithExtension();
   const page = await context.newPage();
 
-  await page.goto(`http://localhost:${PORT}/linkedin-jobs.html`);
+  await page.goto(`http://localhost:${PORT}/jobs/linkedin-jobs.html`);
   await waitForConfirmedBadge(page);
 
   const badge = await getBadgeOnCard(page, "003");
@@ -71,7 +71,7 @@ test("each matched card has exactly one badge (no duplicates)", async () => {
   const { context } = await launchWithExtension();
   const page = await context.newPage();
 
-  await page.goto(`http://localhost:${PORT}/linkedin-jobs.html`);
+  await page.goto(`http://localhost:${PORT}/jobs/linkedin-jobs.html`);
   await waitForConfirmedBadge(page);
   await page.waitForTimeout(500); // let any extra scans settle
 

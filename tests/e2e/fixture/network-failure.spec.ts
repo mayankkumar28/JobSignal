@@ -22,7 +22,7 @@ test("bundled snapshot is used when IND is unreachable — badges still appear",
     throw new Error(`Page JS error: ${e.message}`);
   });
 
-  await page.goto(`http://localhost:${PORT}/linkedin-jobs.html`);
+  await page.goto(`http://localhost:${PORT}/jobs/linkedin-jobs.html`);
 
   // Bundled snapshot has 12k+ entries; Booking.com is a real IND sponsor
   const badge = await page.waitForSelector(".dvs-badge", { timeout: 10_000 });
@@ -36,7 +36,7 @@ test("extension does not crash or throw JS errors when IND is unreachable", asyn
   const page = await context.newPage();
   page.on("pageerror", (e) => errors.push(e.message));
 
-  await page.goto(`http://localhost:${PORT}/linkedin-jobs.html`);
+  await page.goto(`http://localhost:${PORT}/jobs/linkedin-jobs.html`);
   await page.waitForTimeout(5000);
 
   expect(errors).toHaveLength(0);

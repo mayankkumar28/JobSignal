@@ -3,8 +3,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { readFileSync } from "fs";
 import { resolve } from "path";
 
-vi.mock("../src/shared/storage", () => ({}));
-
 import {
   formatDate,
   renderStats,

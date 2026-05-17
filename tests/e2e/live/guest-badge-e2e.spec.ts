@@ -26,6 +26,14 @@ test.describe("Live LinkedIn — extension badge injection", () => {
     if (badge) {
       const text = await badge.textContent();
       expect(text).toContain("Visa Sponsor");
+
+      // Badge must be appended inside an element that also carries the
+      // company name — guards against a regression where the badge is
+      // accidentally injected at page root or in an empty container.
+      const parentText = await badge.evaluate(
+        (el) => el.parentElement?.textContent?.trim() ?? "",
+      );
+      expect(parentText.length).toBeGreaterThan("Visa Sponsor".length + 1);
     } else {
       // Extension ran but no sponsors matched current listings — acceptable
       const processed = await page.locator("[data-dvs-checked]").count();

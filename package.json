@@ -13,6 +13,7 @@
     "discover-selectors:logged-in": "node scripts/discover-selectors.mjs --logged-in",
     "save-auth": "node scripts/save-auth.mjs",
     "lint": "eslint src/",
+    "typecheck": "tsc --noEmit -p tsconfig.build.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:integration": "vitest run --dir tests/integration",

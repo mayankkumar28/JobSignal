@@ -32,18 +32,24 @@ function fetch(url) {
   });
 }
 
+// Mirror of decodeEntities() in src/shared/sponsorFetcher.ts.
+// Keep in sync — the unit tests cover the canonical TS version.
+const NAMED = { amp: "&", quot: '"', apos: "'", lt: "<", gt: ">", nbsp: " " };
+function decodeEntities(s) {
+  return s.replace(/&(?:#x([0-9a-fA-F]+)|#(\d+)|([a-zA-Z]+));/g, (match, hex, dec, name) => {
+    if (hex) return String.fromCodePoint(parseInt(hex, 16));
+    if (dec) return String.fromCodePoint(parseInt(dec, 10));
+    if (name && NAMED[name]) return NAMED[name];
+    return match;
+  });
+}
+
 function parseNames(html) {
   const names = [];
   const pattern = /<th[^>]+scope="row"[^>]*>([\s\S]*?)<\/th>/g;
   let m;
   while ((m = pattern.exec(html)) !== null) {
-    const name = m[1]
-      .replace(/&amp;/g, "&")
-      .replace(/&quot;/g, '"')
-      .replace(/&#039;/g, "'")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
-      .trim();
+    const name = decodeEntities(m[1]).trim();
     if (name) names.push(name);
   }
   return names;

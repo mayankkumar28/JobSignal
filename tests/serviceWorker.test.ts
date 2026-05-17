@@ -52,6 +52,61 @@ describe("fetchAndCacheSponsors", () => {
     expect(updateStats).toHaveBeenCalledWith({ lastSyncTimestamp: mockCache.fetchedAt });
     expect(result).toBe(mockCache);
   });
+
+  it("persists the fresh cache when there is no previous cache (first install)", async () => {
+    vi.mocked(getSponsorCache).mockResolvedValue(null);
+    const result = await fetchAndCacheSponsors();
+    expect(setSponsorCache).toHaveBeenCalledWith(mockCache);
+    expect(result).toBe(mockCache);
+  });
+
+  it("keeps the previous cache when the fresh fetch shrinks by more than 50%", async () => {
+    const previous: SponsorCache = {
+      sponsors: Array.from({ length: 10_000 }, (_, i) => ({
+        originalName: `Co ${i}`,
+        normalizedName: `co ${i}`,
+        tokens: ["co", `${i}`],
+      })),
+      fetchedAt: 999,
+      version: "1.0",
+    };
+    const tiny: SponsorCache = {
+      sponsors: previous.sponsors.slice(0, 100),
+      fetchedAt: 1_000_000,
+      version: "1.0",
+    };
+    vi.mocked(getSponsorCache).mockResolvedValue(previous);
+    vi.mocked(fetchAndBuildCache).mockResolvedValue(tiny);
+
+    const result = await fetchAndCacheSponsors();
+
+    expect(setSponsorCache).not.toHaveBeenCalled();
+    expect(updateStats).not.toHaveBeenCalled();
+    expect(result).toBe(previous);
+  });
+
+  it("persists the fresh cache when shrinkage is within the safety threshold", async () => {
+    const previous: SponsorCache = {
+      sponsors: Array.from({ length: 100 }, (_, i) => ({
+        originalName: `Co ${i}`,
+        normalizedName: `co ${i}`,
+        tokens: ["co", `${i}`],
+      })),
+      fetchedAt: 999,
+      version: "1.0",
+    };
+    const slightlySmaller: SponsorCache = {
+      sponsors: previous.sponsors.slice(0, 80), // 20% smaller — fine
+      fetchedAt: 1_000_000,
+      version: "1.0",
+    };
+    vi.mocked(getSponsorCache).mockResolvedValue(previous);
+    vi.mocked(fetchAndBuildCache).mockResolvedValue(slightlySmaller);
+
+    const result = await fetchAndCacheSponsors();
+    expect(setSponsorCache).toHaveBeenCalledWith(slightlySmaller);
+    expect(result).toBe(slightlySmaller);
+  });
 });
 
 // ── handleInstall ────────────────────────────────────────────────────────────

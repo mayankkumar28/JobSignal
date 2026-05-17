@@ -5,11 +5,26 @@ import type { MessageType, SponsorCache } from "../shared/types";
 const ALARM_NAME = "refresh-sponsors";
 const ALARM_PERIOD_MINUTES = 43200; // 30 days
 
+// If a refresh returns dramatically fewer sponsors than we previously had cached,
+// something has gone wrong upstream (IND page restructure, partial response,
+// compromise). Keep the previous cache rather than persisting the suspicious one.
+const SHRINK_REJECT_RATIO = 0.5;
+
 export async function fetchAndCacheSponsors(): Promise<SponsorCache> {
-  const cache = await fetchAndBuildCache();
-  await setSponsorCache(cache);
-  await updateStats({ lastSyncTimestamp: cache.fetchedAt });
-  return cache;
+  const previous = await getSponsorCache();
+  const fresh = await fetchAndBuildCache();
+  if (
+    previous &&
+    fresh.sponsors.length < previous.sponsors.length * SHRINK_REJECT_RATIO
+  ) {
+    console.warn(
+      `[DVS] Rejecting fresh sponsor list: ${fresh.sponsors.length} entries vs ${previous.sponsors.length} cached — keeping previous cache`,
+    );
+    return previous;
+  }
+  await setSponsorCache(fresh);
+  await updateStats({ lastSyncTimestamp: fresh.fetchedAt });
+  return fresh;
 }
 
 export async function handleInstall(): Promise<void> {

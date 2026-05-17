@@ -1,5 +1,30 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { parseSponsorsFromHTML, buildSponsorCache, fetchSponsorsFromIND } from "../src/shared/sponsorFetcher";
+import { parseSponsorsFromHTML, buildSponsorCache, fetchSponsorsFromIND, decodeEntities } from "../src/shared/sponsorFetcher";
+
+// ── decodeEntities ───────────────────────────────────────────────────────────
+
+describe("decodeEntities", () => {
+  it("decodes named entities", () => {
+    expect(decodeEntities("Smith &amp; Sons &quot;BV&quot;")).toBe('Smith & Sons "BV"');
+  });
+
+  it("decodes decimal numeric entities", () => {
+    expect(decodeEntities("Caf&#233;")).toBe("Café");
+  });
+
+  it("decodes hex numeric entities", () => {
+    expect(decodeEntities("Caf&#xE9;")).toBe("Café");
+  });
+
+  it("leaves unknown named entities untouched", () => {
+    expect(decodeEntities("&unknownentity;")).toBe("&unknownentity;");
+  });
+
+  it("does not double-decode &amp;#x41; → A", () => {
+    // Single-pass: only the outer entity decodes, leaving the inner numeric literal.
+    expect(decodeEntities("&amp;#x41;")).toBe("&#x41;");
+  });
+});
 
 // ── parseSponsorsFromHTML ────────────────────────────────────────────────────
 

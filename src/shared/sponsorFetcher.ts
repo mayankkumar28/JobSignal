@@ -25,20 +25,38 @@ export async function fetchSponsorsFromIND(): Promise<string[]> {
   }
 }
 
+const NAMED_ENTITIES: Record<string, string> = {
+  amp: "&",
+  quot: '"',
+  apos: "'",
+  lt: "<",
+  gt: ">",
+  nbsp: " ",
+};
+
+// Single-pass HTML entity decoder. Handles &amp;/&quot;/&apos;/&lt;/&gt;/&nbsp;,
+// numeric (&#NNN;) and hex (&#xNNN;) forms. Other named entities (&eacute; etc.)
+// pass through unchanged — the IND register uses UTF-8 directly for accented chars.
+export function decodeEntities(s: string): string {
+  return s.replace(
+    /&(?:#x([0-9a-fA-F]+)|#(\d+)|([a-zA-Z]+));/g,
+    (match, hex, dec, name) => {
+      if (hex) return String.fromCodePoint(parseInt(hex, 16));
+      if (dec) return String.fromCodePoint(parseInt(dec, 10));
+      if (name && NAMED_ENTITIES[name]) return NAMED_ENTITIES[name];
+      return match;
+    },
+  );
+}
+
 // Regex-based parser: extracts text from <th scope="row">…</th> cells.
-// Handles HTML entities; works in both browser and Node contexts.
+// Works in both service-worker and Node contexts (no DOMParser dependency).
 export function parseSponsorsFromHTML(html: string): string[] {
   const names: string[] = [];
   const pattern = /<th[^>]+scope="row"[^>]*>([\s\S]*?)<\/th>/g;
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(html)) !== null) {
-    const raw = match[1]
-      .replace(/&amp;/g, "&")
-      .replace(/&quot;/g, '"')
-      .replace(/&#039;/g, "'")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
-      .trim();
+    const raw = decodeEntities(match[1]).trim();
     if (raw.length > 0) {
       names.push(raw);
     }
